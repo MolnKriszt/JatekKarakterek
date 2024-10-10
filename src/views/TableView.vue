@@ -15,14 +15,12 @@
         </thead>
         <tbody>
           <tr
-            v-for="(champ, i) of this.champions"
+            v-for="(champ, i) of filteredChampions"
             :key="i"
             @click="setSelectedChampion(champ)"
             :class="{ 'selected-champ': champ === selectedChampion }"
           >
-            <td class="text-start">
-              {{ champ.name }}
-            </td>
+            <td class="text-start" v-html="keresJelol(champ.name)"></td>
             <td class="text-start">
               {{ Array.isArray(champ.role) ? champ.role.join(", ") : "N/A" }}
             </td>
@@ -52,12 +50,12 @@
 </template>
 
 <script>
-import { provide } from 'vue'
 export default {
-  provide(){
-    return{
-      champions: this.champions
-    }
+  inject: ["searchWord"],
+  provide() {
+    return {
+      champions: [],
+    };
   },
   data() {
     return {
@@ -77,6 +75,19 @@ export default {
     window.removeEventListener("resize", this.calculateTableHeight);
   },
   methods: {
+    keresJelol(text) {
+      if (this.searchWord) {
+        let what = new RegExp(this.searchWord, "gi");
+        if (text) {
+          text = text.replace(what, (match) => {
+            return `<span class="mark p-0">${match}</span>`;
+          });
+        }
+        return text;
+      } else {
+        return text;
+      }
+    },
     setSelectedChampion(champion) {
       this.selectedChampion = champion;
     },
@@ -94,6 +105,7 @@ export default {
           image: `https://ddragon.leagueoflegends.com/cdn/img/champion/splash/${champ.id}_0.jpg`,
           role: champ.tags,
           title: champ.title,
+          quote: champ.blurb,
         }));
       } catch (error) {
         console.log("Error:", error);
@@ -106,16 +118,36 @@ export default {
       this.tableHeight = windowHeight - headerHeight;
     },
   },
+  computed:{
+    filteredChampions() {
+      if (!this.searchWord) {
+        return this.champions;
+      }
+      return this.champions.filter((c) => {
+        return (
+          c.name.toLowerCase().includes(this.searchWord.toLowerCase()) ||
+          c.role.some((r) =>
+            r.toLowerCase().includes(this.searchWord.toLowerCase())
+          ) ||
+          c.title.toLowerCase().includes(this.searchWord.toLowerCase()) ||
+          c.quote.toLowerCase().includes(this.searchWord.toLowerCase())
+        );
+      });
+    },
+  }
 };
 </script>
 
 <style>
+.mark {
+  background-color: lightyellow !important;
+}
 
 .selected-champ td {
   color: var(--text-color) !important;
   text-align: center !important;
 }
-td:hover{
+td:hover {
   cursor: pointer;
 }
 

@@ -43,6 +43,9 @@ export default {
       searchWordInput: null,
     };
   },
+  methods:{
+    
+  }
 };
 </script>
 
